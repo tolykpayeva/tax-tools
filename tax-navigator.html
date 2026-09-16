@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Налоговый навигатор — НДС и КПН для бухгалтера</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF8;
+    --paper-raised:#F2F0E9;
+    --ink:#1C1B1A;
+    --ink-soft:#6B6558;
+    --rule:#DAD6CD;
+    --rule-strong:#C4BEAC;
+    --navy:#1F3A5F;
+    --navy-soft:#E7ECF1;
+    --brick:#A13D2C;
+    --brick-soft:#F5E7E2;
+    --forest:#3F6B4F;
+    --forest-soft:#E7EFE8;
+    --font-serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#17181A;
+      --paper-raised:#1F2023;
+      --ink:#EDEAE2;
+      --ink-soft:#A19C8E;
+      --rule:#35332E;
+      --rule-strong:#46433C;
+      --navy:#8FB0DA;
+      --navy-soft:#212C3A;
+      --brick:#D9836A;
+      --brick-soft:#332320;
+      --forest:#84BB98;
+      --forest-soft:#1F2C22;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#17181A;
+    --paper-raised:#1F2023;
+    --ink:#EDEAE2;
+    --ink-soft:#A19C8E;
+    --rule:#35332E;
+    --rule-strong:#46433C;
+    --navy:#8FB0DA;
+    --navy-soft:#212C3A;
+    --brick:#D9836A;
+    --brick-soft:#332320;
+    --forest:#84BB98;
+    --forest-soft:#1F2C22;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-font-smoothing:antialiased;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    line-height:1.5;
+  }
+  svg{display:block;max-width:100%;height:auto;}
+  button,input,select{font:inherit;color:inherit;}
+  a{color:var(--navy);}
+
+  h1,h2,h3{
+    font-family:var(--font-serif);
+    font-weight:600;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+    margin:0 0 12px 0;
+  }
+  h2{font-size:clamp(26px,3.6vw,34px);}
+  h3{font-size:19px;margin-top:36px;}
+
+  .lede{
+    font-family:var(--font-serif);
+    font-size:19px;
+    line-height:1.65;
+    max-width:620px;
+    color:var(--ink);
+    margin:0 0 40px 0;
+  }
+  p{max-width:640px;}
+  .section-note{font-size:14px;color:var(--ink-soft);max-width:640px;}
+
+  /* ---------- layout ---------- */
+  .app{display:flex;min-height:100vh;}
+  .index{
+    width:236px;
+    flex-shrink:0;
+    border-right:1px solid var(--rule);
+    padding:32px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:36px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .index-brand{display:flex;gap:12px;align-items:flex-start;}
+  .index-brand-mark{
+    font-family:var(--font-serif);
+    font-size:22px;
+    font-weight:700;
+    color:var(--navy);
+    border:1px solid var(--rule-strong);
+    width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .index-brand-title{
+    font-family:var(--font-serif);
+    font-size:16px;
+    font-weight:600;
+    line-height:1.25;
+    margin:0;
+  }
+  .index-brand-sub{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:4px 0 0 0;
+  }
+  .index-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;}
+  .index-item{
+    display:block;
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    border-left:2px solid transparent;
+    padding:10px 12px;
+    font-size:14px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:color .15s, border-color .15s, background .15s;
+  }
+  .index-item:hover{color:var(--ink);}
+  .index-item.active{
+    color:var(--navy);
+    border-left-color:var(--navy);
+    background:var(--navy-soft);
+    font-weight:600;
+  }
+  .index-footnote{
+    margin-top:auto;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.5;
+    border-top:1px solid var(--rule);
+    padding-top:16px;
+  }
+
+  .content{flex:1;padding:56px 64px 96px;max-width:1120px;}
+  .tab{display:none;}
+  .tab.active{display:block;animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+
+  /* ---------- chain diagram ---------- */
+  .chain-block{margin-bottom:40px;}
+  .chain-block h3{margin-top:28px;}
+  .chain-svg-wrap{
+    border:1px solid var(--rule);
+    padding:16px 8px 8px;
+    overflow-x:auto;
+    background:var(--paper-raised);
+  }
+  .chain-svg-wrap svg{min-width:640px;}
+
+  /* ---------- tables ---------- */
+  .table-wrap{overflow-x:auto;margin:16px 0 8px;}
+  table.doc-table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px;}
+  table.doc-table th{
+    text-align:left;
+    font-family:var(--font-sans);
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    border-bottom:1px solid var(--rule-strong);
+    padding:8px 16px 8px 0;
+  }
+  table.doc-table td{
+    padding:12px 16px 12px 0;
+    border-bottom:1px solid var(--rule);
+    vertical-align:top;
+  }
+  table.doc-table td:first-child{font-weight:600;white-space:nowrap;}
+
+  dl.rates-list{
+    margin:16px 0 8px;
+    border-top:1px solid var(--rule-strong);
+  }
+  dl.rates-list div{
+    display:flex;
+    justify-content:space-between;
+    gap:24px;
+    padding:12px 0;
+    border-bottom:1px solid var(--rule);
+  }
+  dl.rates-list dt{font-size:14px;max-width:420px;}
+  dl.rates-list dd{
+    margin:0;
+    font-family:var(--font-serif);
+    font-weight:600;
+    font-size:15px;
+    text-align:right;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* ---------- calculator ---------- */
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:32px;}
+  .reset-link{
+    background:none;border:none;padding:0;
+    font-size:13px;color:var(--navy);text-decoration:underline;
+    cursor:pointer;margin-bottom:24px;
+  }
+  .form-field{margin-bottom:22px;}
+  .form-field label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  .field-hint{font-size:12px;color:var(--ink-soft);margin-top:5px;}
+  input[type=number],select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--rule-strong);
+    background:var(--paper);
+    color:var(--ink);
+    font-size:15px;
+    font-variant-numeric:tabular-nums;
+  }
+  input[type=number]:focus,select:focus,input[type=range]:focus,.index-item:focus,.reset-link:focus{
+    outline:2px solid var(--navy);outline-offset:2px;
+  }
+  input[type=checkbox]{accent-color:var(--navy);width:16px;height:16px;vertical-align:middle;margin-right:8px;}
+  .checkbox-row{display:flex;align-items:center;font-size:14px;margin-top:10px;}
+  input[type=range]{width:100%;accent-color:var(--navy);}
+  .range-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .range-value{
+    font-family:var(--font-serif);font-weight:600;font-size:14px;color:var(--navy);
+    font-variant-numeric:tabular-nums;
+  }
+  #voluntaryVatField{display:none;}
+  #voluntaryVatField.visible{display:block;}
+
+  .result-panel{
+    border:1px solid var(--rule-strong);
+    background:var(--paper-raised);
+    padding:28px 28px 24px;
+    position:sticky;
+    top:32px;
+  }
+  .badge{
+    display:inline-block;
+    font-size:12.5px;
+    font-weight:600;
+    padding:4px 10px;
+    border:1px solid var(--rule-strong);
+  }
+  .badge.on{color:var(--forest);border-color:var(--forest);background:var(--forest-soft);}
+  .badge.off{color:var(--ink-soft);}
+  .result-status{margin-bottom:18px;}
+  .result-row{
+    display:flex;justify-content:space-between;gap:12px;
+    padding:9px 0;border-bottom:1px solid var(--rule);
+    font-size:14px;
+  }
+  .result-row span:first-child{color:var(--ink-soft);}
+  .result-row span:last-child{font-variant-numeric:tabular-nums;font-weight:500;}
+  .result-row.total{
+    border-bottom:none;border-top:1px solid var(--rule-strong);
+    margin-top:6px;padding-top:16px;font-weight:600;font-size:15px;
+  }
+  .burden-block{margin-top:24px;text-align:left;}
+  .burden-label{font-size:13px;color:var(--ink-soft);}
+  .burden-figure{
+    font-family:var(--font-serif);
+    font-size:clamp(46px,6vw,64px);
+    font-weight:700;
+    line-height:1;
+    margin:6px 0 0;
+    color:var(--navy);
+  }
+  .burden-figure.low{color:var(--forest);}
+  .burden-figure.high{color:var(--brick);}
+  .burden-figure.pulse{animation:pulse .4s ease;}
+  @keyframes pulse{0%{opacity:.45}100%{opacity:1}}
+
+  .doc-cost{
+    margin-top:20px;
+    padding:14px 16px;
+    border-left:3px solid var(--brick);
+    background:var(--brick-soft);
+    font-size:13.5px;
+    line-height:1.55;
+  }
+  .doc-cost.positive{border-left-color:var(--forest);background:var(--forest-soft);}
+  .doc-cost strong{font-variant-numeric:tabular-nums;}
+
+  /* ---------- charts ---------- */
+  .chart-block{margin-bottom:48px;}
+  .chart-wrap{
+    border:1px solid var(--rule);
+    padding:20px 16px 12px;
+    overflow-x:auto;
+    background:var(--paper-raised);
+    margin-top:16px;
+  }
+  .chart-wrap svg{min-width:620px;}
+  .chart-caption{font-size:14px;color:var(--ink-soft);margin-top:12px;max-width:640px;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:880px){
+    .app{flex-direction:column;}
+    .index{
+      width:auto;position:static;height:auto;
+      flex-direction:row;align-items:center;gap:20px;
+      padding:16px 20px;border-right:none;border-bottom:1px solid var(--rule);
+      overflow-x:auto;
+    }
+    .index-list{flex-direction:row;}
+    .index-item{border-left:none;border-bottom:2px solid transparent;white-space:nowrap;}
+    .index-item.active{border-bottom-color:var(--navy);background:none;}
+    .index-footnote{display:none;}
+    .content{padding:32px 20px 64px;}
+    .calc-grid{grid-template-columns:1fr;gap:32px;}
+    .result-panel{position:static;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="index" aria-label="Разделы">
+    <div class="index-brand">
+      <span class="index-brand-mark" aria-hidden="true">§</span>
+      <div>
+        <p class="index-brand-title">Налоговый<br>навигатор</p>
+        <p class="index-brand-sub">НДС и КПН · РК 2026</p>
+      </div>
+    </div>
+    <ul class="index-list">
+      <li><button class="index-item active" data-tab="chain" type="button">Как это устроено</button></li>
+      <li><button class="index-item" data-tab="calc" type="button">Калькулятор</button></li>
+      <li><button class="index-item" data-tab="analytics" type="button">Аналитика нагрузки</button></li>
+    </ul>
+    <p class="index-footnote">Ставки и пороги — по Налоговому кодексу РК, действующему с 1 января 2026 года. Инструмент упрощает расчёт и не заменяет консультацию налогового консультанта.</p>
+  </nav>
+
+  <main class="content">
+
+    <!-- ================= TAB 1: CHAIN ================= -->
+    <section id="tab-chain" class="tab active">
+      <h2>Отчёт начинается не с декларации</h2>
+      <p class="lede">Бухгалтер закрывает НДС и КПН каждый квартал и год, но налог не рождается в декларации. Он формируется раньше — в договоре, акте, счёте‑фактуре. Если документ пришёл с опозданием, не тем числом или вовсе не пришёл, это видно только в итоговой сумме к уплате.</p>
+
+      <div class="chain-block">
+        <h3>Цепочка НДС</h3>
+        <p class="section-note">От сделки до суммы к уплате: форма 300.00 держится на корректно выписанном и проведённом ЭСФ.</p>
+        <div class="chain-svg-wrap">
+          <svg viewBox="0 0 1000 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Цепочка НДС: сделка, ЭСФ, книга покупок и продаж, форма 300.00, НДС к уплате">
+            <defs>
+              <marker id="arrowVat" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--rule-strong)"></path>
+              </marker>
+            </defs>
+            <!-- connecting lines -->
+            <line x1="140" y1="48" x2="215" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowVat)"></line>
+            <line x1="355" y1="48" x2="430" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowVat)"></line>
+            <line x1="570" y1="48" x2="645" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowVat)"></line>
+            <line x1="785" y1="48" x2="860" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowVat)"></line>
+
+            <!-- risk connector + badge (between node 2 and node 3) -->
+            <line x1="392" y1="54" x2="392" y2="88" stroke="var(--brick)" stroke-width="1.25" stroke-dasharray="2,3"></line>
+            <circle cx="392" cy="99" r="10" fill="var(--brick)"></circle>
+            <text x="392" y="103" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="#FFFFFF">!</text>
+            <text x="392" y="130" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--brick)">Без корректного ЭСФ</text>
+            <text x="392" y="146" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--brick)">НДС к уплате будет выше</text>
+
+            <!-- node 1 -->
+            <rect x="0" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="70" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">Акт / накладная</text>
+            <text x="70" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">по сделке</text>
+
+            <!-- node 2 -->
+            <rect x="215" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="285" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">ЭСФ выписан</text>
+            <text x="285" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">и проведён</text>
+
+            <!-- node 3 -->
+            <rect x="430" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="500" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">Книга покупок</text>
+            <text x="500" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">и продаж</text>
+
+            <!-- node 4 -->
+            <rect x="645" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="715" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">Декларация</text>
+            <text x="715" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">форма 300.00</text>
+
+            <!-- node 5 -->
+            <rect x="860" y="20" width="140" height="56" fill="var(--navy-soft)" stroke="var(--navy)" stroke-width="1.25"></rect>
+            <text x="930" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--navy)">НДС</text>
+            <text x="930" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--navy)">к уплате</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="chain-block">
+        <h3>Цепочка КПН</h3>
+        <p class="section-note">Тот же период, другой маршрут: форма 100.00 держится на документах, подтверждающих расход.</p>
+        <div class="chain-svg-wrap">
+          <svg viewBox="0 0 1000 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Цепочка КПН: доходы и расходы, учётные регистры, налогооблагаемый доход, форма 100.00, КПН к уплате">
+            <defs>
+              <marker id="arrowCpn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--rule-strong)"></path>
+              </marker>
+            </defs>
+            <line x1="140" y1="48" x2="215" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowCpn)"></line>
+            <line x1="355" y1="48" x2="430" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowCpn)"></line>
+            <line x1="570" y1="48" x2="645" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowCpn)"></line>
+            <line x1="785" y1="48" x2="860" y2="48" stroke="var(--rule-strong)" stroke-width="1.5" marker-end="url(#arrowCpn)"></line>
+
+            <!-- risk connector + badge (between node 1 and node 2) -->
+            <line x1="177" y1="54" x2="177" y2="88" stroke="var(--brick)" stroke-width="1.25" stroke-dasharray="2,3"></line>
+            <circle cx="177" cy="99" r="10" fill="var(--brick)"></circle>
+            <text x="177" y="103" text-anchor="middle" font-family="var(--font-sans)" font-size="12" font-weight="700" fill="#FFFFFF">!</text>
+            <text x="177" y="130" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--brick)">Расход без документа</text>
+            <text x="177" y="146" text-anchor="middle" font-family="var(--font-sans)" font-size="12" fill="var(--brick)">не идёт на вычеты</text>
+
+            <rect x="0" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="70" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">Договор, акт,</text>
+            <text x="70" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">накладная</text>
+
+            <rect x="215" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="285" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">Учётные</text>
+            <text x="285" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">регистры</text>
+
+            <rect x="430" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="500" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">Доходы минус</text>
+            <text x="500" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">вычеты</text>
+
+            <rect x="645" y="20" width="140" height="56" fill="var(--paper)" stroke="var(--rule-strong)" stroke-width="1.25"></rect>
+            <text x="715" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">Декларация</text>
+            <text x="715" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" fill="var(--ink)">форма 100.00</text>
+
+            <rect x="860" y="20" width="140" height="56" fill="var(--navy-soft)" stroke="var(--navy)" stroke-width="1.25"></rect>
+            <text x="930" y="45" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--navy)">КПН</text>
+            <text x="930" y="61" text-anchor="middle" font-family="var(--font-sans)" font-size="12.5" font-weight="600" fill="var(--navy)">к уплате</text>
+          </svg>
+        </div>
+      </div>
+
+      <h3>Какие документы решают всё</h3>
+      <p class="section-note">Одна и та же папка документов кормит оба отчёта — но каждый документ влияет на них по‑своему.</p>
+      <div class="table-wrap">
+        <table class="doc-table">
+          <thead>
+            <tr><th>Документ</th><th>Что подтверждает</th><th>На что влияет</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Договор</td><td>Условия сделки и момент возникновения обязательств</td><td>Основание для отражения операции в учёте</td></tr>
+            <tr><td>ЭСФ</td><td>Факт реализации, ставку и сумму НДС</td><td>Право на зачёт входящего НДС</td></tr>
+            <tr><td>Акт выполненных работ</td><td>Момент фактического оказания услуги</td><td>Признание дохода и расхода для НДС и КПН</td></tr>
+            <tr><td>Накладная (ТТН)</td><td>Факт передачи и движение товара</td><td>Вычет по КПН и зачёт НДС по товарам</td></tr>
+            <tr><td>Авансовый отчёт</td><td>Расходы подотчётного лица</td><td>Вычет по КПН при наличии подтверждающих чеков</td></tr>
+            <tr><td>Банковская выписка / чек ККМ</td><td>Факт и способ оплаты</td><td>Ограничение вычета при крупных наличных расчётах</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Ставки на 2026 год</h3>
+      <dl class="rates-list">
+        <div><dt>НДС, базовая ставка</dt><dd>16%</dd></div>
+        <div><dt>НДС, льготная ставка на лекарства и медизделия (в 2026 году, с повышением до 10% в 2027 году)</dt><dd>5%</dd></div>
+        <div><dt>Порог обязательной постановки на учёт по НДС</dt><dd>10 000 МРП ≈ 43,25 млн ₸/год</dd></div>
+        <div><dt>КПН, базовая ставка</dt><dd>20%</dd></div>
+        <div><dt>КПН для банков и игорного бизнеса</dt><dd>25%</dd></div>
+        <div><dt>КПН для сельхозпроизводителей</dt><dd>3%</dd></div>
+        <div><dt>КПН для организаций социальной сферы (в 2026 году, с повышением до 10% в 2027 году)</dt><dd>5%</dd></div>
+        <div><dt>Наличные расчёты свыше 1000 МРП на вычет по КПН (если обе стороны — плательщики НДС)</dt><dd>не идут</dd></div>
+      </dl>
+    </section>
+
+    <!-- ================= TAB 2: CALCULATOR ================= -->
+    <section id="tab-calc" class="tab">
+      <h2>Впишите сумму — остальное посчитается само</h2>
+      <p class="lede">Добавьте поступление, расходы и покупки, отметьте, какая часть подтверждена документами. Налоговая нагрузка пересчитывается при каждом изменении.</p>
+
+      <div class="calc-grid">
+        <div class="calc-form">
+          <button type="button" class="reset-link" id="resetBtn">Вернуть значения примера</button>
+
+          <div class="form-field">
+            <label for="revenue">Сумма поступления, ₸ (за год)</label>
+            <input type="number" id="revenue" min="0" step="100000" value="65000000">
+            <div class="checkbox-row">
+              <input type="checkbox" id="revenueIncludesVat">
+              <label for="revenueIncludesVat" style="margin:0;">Сумма указана с учётом НДС</label>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="vatRate">Ставка НДС по операции</label>
+            <select id="vatRate">
+              <option value="16">16% — стандартная</option>
+              <option value="5">5% — лекарства и медизделия (льготная)</option>
+            </select>
+          </div>
+
+          <div class="form-field" id="voluntaryVatField">
+            <div class="checkbox-row">
+              <input type="checkbox" id="voluntaryVat">
+              <label for="voluntaryVat" style="margin:0;">Добровольная постановка на учёт по НДС</label>
+            </div>
+            <p class="field-hint">Поле показано, потому что оборот ниже порога в 43,25 млн ₸/год.</p>
+          </div>
+
+          <div class="form-field">
+            <label for="cpnCategory">Категория для КПН</label>
+            <select id="cpnCategory">
+              <option value="standard">Стандартная ставка — 20%</option>
+              <option value="bank">Банки и игорный бизнес — 25%</option>
+              <option value="agro">Сельхозпроизводители — 3%</option>
+              <option value="social">Социальная сфера — 5% (2026 год)</option>
+              <option value="sez">СЭЗ / технопарк — 0%</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="expenses">Расходы за период, ₸</label>
+            <input type="number" id="expenses" min="0" step="100000" value="28000000">
+          </div>
+
+          <div class="form-field">
+            <div class="range-row">
+              <label for="expenseDocPercent" style="margin:0;">Доля расходов, подтверждённых документами</label>
+              <span class="range-value" id="expenseDocPercentValue">80%</span>
+            </div>
+            <input type="range" id="expenseDocPercent" min="0" max="100" step="5" value="80">
+          </div>
+
+          <div class="form-field">
+            <label for="purchases">Покупки с входящим НДС, ₸</label>
+            <input type="number" id="purchases" min="0" step="100000" value="20000000">
+            <p class="field-hint">Без учёта самого НДС. Зачёт считается по ставке 16%.</p>
+          </div>
+
+          <div class="form-field">
+            <div class="range-row">
+              <label for="purchaseDocPercent" style="margin:0;">Доля покупок с корректными ЭСФ</label>
+              <span class="range-value" id="purchaseDocPercentValue">90%</span>
+            </div>
+            <input type="range" id="purchaseDocPercent" min="0" max="100" step="5" value="90">
+          </div>
+        </div>
+
+        <div class="result-panel">
+          <div class="result-status">
+            <span class="badge" id="vatStatusBadge">—</span>
+          </div>
+          <div class="result-row"><span>Начислен НДС (исходящий)</span><span id="rOutputVat">—</span></div>
+          <div class="result-row"><span>НДС к зачёту (входящий)</span><span id="rInputVat">—</span></div>
+          <div class="result-row"><span>НДС к уплате</span><span id="rVatPayable">—</span></div>
+          <div class="result-row"><span>Налогооблагаемый доход (КПН)</span><span id="rTaxableIncome">—</span></div>
+          <div class="result-row"><span>Ставка КПН</span><span id="rCpnRate">—</span></div>
+          <div class="result-row"><span>КПН к уплате</span><span id="rCpnPayable">—</span></div>
+          <div class="result-row total"><span>Итого налогов</span><span id="rTotalTax">—</span></div>
+
+          <div class="burden-block">
+            <div class="burden-label">Налоговая нагрузка от поступления</div>
+            <div class="burden-figure" id="burdenFigure">—</div>
+          </div>
+
+          <div class="doc-cost" id="docCostBlock"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: ANALYTICS ================= -->
+    <section id="tab-analytics" class="tab">
+      <h2>Как растёт нагрузка вместе с бизнесом</h2>
+      <p class="lede">Графики берут текущие цифры калькулятора и показывают, что происходит с нагрузкой при другом обороте и другой полноте документов.</p>
+
+      <div class="chart-block">
+        <h3>Нагрузка при разных объёмах выручки</h3>
+        <div class="chart-wrap"><svg id="chartRevenue" viewBox="0 0 620 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Нагрузка при разных объёмах выручки"></svg></div>
+        <p class="chart-caption" id="chartRevenueCaption"></p>
+      </div>
+
+      <div class="chart-block">
+        <h3>Цена неполного пакета документов</h3>
+        <div class="chart-wrap"><svg id="chartDocs" viewBox="0 0 620 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Нагрузка в зависимости от доли подтверждённых документов"></svg></div>
+        <p class="chart-caption" id="chartDocsCaption"></p>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MRP = 4325;
+  var VAT_THRESHOLD = 10000 * MRP; // 43 250 000 ₸
+
+  var CPN_RATES = {
+    standard: { label: "Стандартная ставка", rate: 0.20 },
+    bank:     { label: "Банки и игорный бизнес", rate: 0.25 },
+    agro:     { label: "Сельхозпроизводители", rate: 0.03 },
+    social:   { label: "Организации социальной сферы", rate: 0.05 },
+    sez:      { label: "СЭЗ / технопарк", rate: 0.00 }
+  };
+
+  var DEFAULTS = {
+    revenue: 65000000,
+    revenueIncludesVat: false,
+    vatRate: 16,
+    voluntaryVat: false,
+    cpnCategory: "standard",
+    expenses: 28000000,
+    expenseDocPercent: 80,
+    purchases: 20000000,
+    purchaseDocPercent: 90
+  };
+
+  /* ---------- tab switching ---------- */
+  var tabButtons = document.querySelectorAll(".index-item");
+  var tabs = document.querySelectorAll(".tab");
+  tabButtons.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      tabButtons.forEach(function(b){ b.classList.remove("active"); });
+      tabs.forEach(function(t){ t.classList.remove("active"); });
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  /* ---------- form helpers ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var inputs = ["revenue","revenueIncludesVat","vatRate","voluntaryVat","cpnCategory",
+                "expenses","expenseDocPercent","purchases","purchaseDocPercent"];
+
+  function readState(){
+    return {
+      revenue: parseFloat($("revenue").value) || 0,
+      revenueIncludesVat: $("revenueIncludesVat").checked,
+      vatRate: parseFloat($("vatRate").value) / 100,
+      voluntaryVat: $("voluntaryVat").checked,
+      cpnCategory: $("cpnCategory").value,
+      expenses: parseFloat($("expenses").value) || 0,
+      expenseDocPercent: parseFloat($("expenseDocPercent").value),
+      purchases: parseFloat($("purchases").value) || 0,
+      purchaseDocPercent: parseFloat($("purchaseDocPercent").value)
+    };
+  }
+
+  function calculate(s){
+    var revenueBase = s.revenueIncludesVat ? s.revenue / (1 + s.vatRate) : s.revenue;
+    var outputVat = s.revenueIncludesVat ? (s.revenue - revenueBase) : (revenueBase * s.vatRate);
+    var isVatPayer = revenueBase > VAT_THRESHOLD || s.voluntaryVat;
+
+    var inputVatRate = 0.16;
+    var inputVatEligible = isVatPayer ? (s.purchases * inputVatRate * (s.purchaseDocPercent / 100)) : 0;
+    var vatPayable = isVatPayer ? Math.max(outputVat - inputVatEligible, 0) : 0;
+
+    var deductibleExpenses = s.expenses * (s.expenseDocPercent / 100);
+    var taxableIncome = Math.max(revenueBase - deductibleExpenses, 0);
+    var cpnRate = CPN_RATES[s.cpnCategory].rate;
+    var cpnPayable = taxableIncome * cpnRate;
+
+    var totalTax = vatPayable + cpnPayable;
+    var burden = revenueBase > 0 ? (totalTax / revenueBase * 100) : 0;
+
+    return {
+      revenueBase: revenueBase, outputVat: outputVat, isVatPayer: isVatPayer,
+      inputVatEligible: inputVatEligible, vatPayable: vatPayable,
+      deductibleExpenses: deductibleExpenses, taxableIncome: taxableIncome,
+      cpnRate: cpnRate, cpnPayable: cpnPayable, totalTax: totalTax, burden: burden
+    };
+  }
+
+  function fmtT(n){ return Math.round(n).toLocaleString("ru-RU") + " ₸"; }
+  function fmtPct(n){ return n.toFixed(1).replace(".", ",") + " %"; }
+  function fmtMillions(n){
+    if(n >= 1000000000){
+      var b = n/1000000000;
+      return (b % 1 === 0 ? b : b.toFixed(2).replace(".", ",")) + " млрд";
+    }
+    if(n % 1000000 === 0) return (n/1000000) + " млн";
+    return (n/1000000).toFixed(2).replace(".", ",") + " млн";
+  }
+
+  /* ---------- render calculator ---------- */
+  function renderCalc(s, r){
+    $("voluntaryVatField").classList.toggle("visible", r.revenueBase <= VAT_THRESHOLD);
+
+    var badge = $("vatStatusBadge");
+    if(r.isVatPayer){
+      badge.textContent = "Плательщик НДС";
+      badge.className = "badge on";
+    } else {
+      badge.textContent = "Не плательщик НДС";
+      badge.className = "badge off";
+    }
+
+    $("rOutputVat").textContent = r.isVatPayer ? fmtT(r.outputVat) : "—";
+    $("rInputVat").textContent = r.isVatPayer ? fmtT(r.inputVatEligible) : "—";
+    $("rVatPayable").textContent = r.isVatPayer ? fmtT(r.vatPayable) : "0 ₸";
+    $("rTaxableIncome").textContent = fmtT(r.taxableIncome);
+    $("rCpnRate").textContent = (r.cpnRate * 100).toFixed(0) + "%";
+    $("rCpnPayable").textContent = fmtT(r.cpnPayable);
+    $("rTotalTax").textContent = fmtT(r.totalTax);
+
+    var fig = $("burdenFigure");
+    var prevText = fig.textContent;
+    fig.textContent = fmtPct(r.burden);
+    fig.classList.remove("low","high");
+    if(r.burden < 15) fig.classList.add("low");
+    else if(r.burden >= 30) fig.classList.add("high");
+    if(prevText !== fig.textContent){
+      fig.classList.remove("pulse");
+      void fig.offsetWidth;
+      fig.classList.add("pulse");
+    }
+
+    var full = calculate(Object.assign({}, s, {expenseDocPercent:100, purchaseDocPercent:100}));
+    var extra = r.totalTax - full.totalTax;
+    var docBlock = $("docCostBlock");
+    if(extra > 1000){
+      docBlock.className = "doc-cost";
+      docBlock.innerHTML = "Из-за неполного пакета документов вы платите на <strong>" + fmtT(extra) + "</strong> больше. При 100% подтверждении документами нагрузка составила бы <strong>" + fmtPct(full.burden) + "</strong> вместо <strong>" + fmtPct(r.burden) + "</strong>.";
+    } else {
+      docBlock.className = "doc-cost positive";
+      docBlock.innerHTML = "Документы в порядке: вычеты по КПН и зачёт по НДС учтены практически полностью.";
+    }
+  }
+
+  /* ---------- SVG chart helpers ---------- */
+  var CH_W = 620, CH_H = 300;
+  var CH_PAD = { top: 16, right: 16, bottom: 40, left: 52 };
+
+  function burdenColor(v){
+    if(v < 15) return "var(--forest)";
+    if(v >= 30) return "var(--brick)";
+    return "var(--navy)";
+  }
+
+  function svgEl(name, attrs){
+    var el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for(var k in attrs){ el.setAttribute(k, attrs[k]); }
+    return el;
+  }
+
+  function drawAxes(svg, maxY){
+    var plotW = CH_W - CH_PAD.left - CH_PAD.right;
+    var plotH = CH_H - CH_PAD.top - CH_PAD.bottom;
+    var steps = 4;
+    for(var i=0;i<=steps;i++){
+      var val = maxY * i / steps;
+      var y = CH_PAD.top + plotH - (plotH * i/steps);
+      svg.appendChild(svgEl("line", {x1:CH_PAD.left, y1:y, x2:CH_PAD.left+plotW, y2:y, stroke:"var(--rule)", "stroke-width":1}));
+      var t = svgEl("text", {x:CH_PAD.left-10, y:y+4, "text-anchor":"end", "font-family":"var(--font-sans)", "font-size":11, fill:"var(--ink-soft)"});
+      t.textContent = Math.round(val) + "%";
+      svg.appendChild(t);
+    }
+    svg.appendChild(svgEl("line", {x1:CH_PAD.left, y1:CH_PAD.top, x2:CH_PAD.left, y2:CH_PAD.top+plotH, stroke:"var(--rule-strong)", "stroke-width":1}));
+    svg.appendChild(svgEl("line", {x1:CH_PAD.left, y1:CH_PAD.top+plotH, x2:CH_PAD.left+plotW, y2:CH_PAD.top+plotH, stroke:"var(--rule-strong)", "stroke-width":1}));
+    return { plotW: plotW, plotH: plotH };
+  }
+
+  function renderRevenueChart(s){
+    var svg = $("chartRevenue");
+    svg.innerHTML = "";
+    var revenue = s.revenue > 0 ? s.revenue : 1;
+    var expenseRatio = s.expenses / revenue;
+    var purchaseRatio = s.purchases / revenue;
+    var levels = [10000000, 20000000, 43250000, 44000000, 60000000, 100000000, 300000000, 1000000000];
+
+    var points = levels.map(function(level){
+      var st = {
+        revenue: level, revenueIncludesVat: false, vatRate: s.vatRate,
+        voluntaryVat: s.voluntaryVat, cpnCategory: s.cpnCategory,
+        expenses: level * expenseRatio, expenseDocPercent: s.expenseDocPercent,
+        purchases: level * purchaseRatio, purchaseDocPercent: s.purchaseDocPercent
+      };
+      var res = calculate(st);
+      return { level: level, burden: res.burden };
+    });
+
+    var maxY = Math.max.apply(null, points.map(function(p){return p.burden;})) * 1.25;
+    maxY = Math.max(maxY, 10);
+    var dims = drawAxes(svg, maxY);
+    var n = points.length;
+    var slot = dims.plotW / n;
+    var barW = slot * 0.55;
+
+    points.forEach(function(p, i){
+      var x = CH_PAD.left + slot*i + (slot-barW)/2;
+      var h = (p.burden/maxY) * dims.plotH;
+      var y = CH_PAD.top + dims.plotH - h;
+      svg.appendChild(svgEl("rect", {x:x, y:y, width:barW, height:Math.max(h,1), fill:burdenColor(p.burden)}));
+      var label = svgEl("text", {x:x+barW/2, y:CH_PAD.top+dims.plotH+18, "text-anchor":"middle", "font-family":"var(--font-sans)", "font-size":10.5, fill:"var(--ink-soft)"});
+      label.textContent = fmtMillions(p.level);
+      svg.appendChild(label);
+    });
+
+    var thresholdIndex = 2.5;
+    var thresholdX = CH_PAD.left + slot*thresholdIndex;
+    svg.appendChild(svgEl("line", {x1:thresholdX, y1:CH_PAD.top, x2:thresholdX, y2:CH_PAD.top+dims.plotH, stroke:"var(--brick)", "stroke-width":1, "stroke-dasharray":"3,3"}));
+    var thLabel = svgEl("text", {x:thresholdX, y:CH_PAD.top-4, "text-anchor":"middle", "font-family":"var(--font-sans)", "font-size":10.5, fill:"var(--brick)"});
+    thLabel.textContent = "порог НДС";
+    svg.appendChild(thLabel);
+
+    var below = points[0].burden;
+    var above = points[points.length-1].burden;
+    $("chartRevenueCaption").textContent = "При текущей структуре расходов нагрузка держится около " + fmtPct(below) + " до порога НДС и скачком поднимается к " + fmtPct(above) + " сразу после регистрации по НДС.";
+  }
+
+  function renderDocsChart(s){
+    var svg = $("chartDocs");
+    svg.innerHTML = "";
+    var levels = [0,20,40,60,80,100];
+    var points = levels.map(function(p){
+      var st = Object.assign({}, s, {expenseDocPercent:p, purchaseDocPercent:p});
+      var res = calculate(st);
+      return { pct: p, burden: res.burden };
+    });
+
+    var maxY = Math.max.apply(null, points.map(function(p){return p.burden;})) * 1.2;
+    maxY = Math.max(maxY, 10);
+    var dims = drawAxes(svg, maxY);
+    var n = points.length;
+
+    var coords = points.map(function(p, i){
+      var x = CH_PAD.left + (dims.plotW * i/(n-1));
+      var y = CH_PAD.top + dims.plotH - (p.burden/maxY)*dims.plotH;
+      return {x:x, y:y, pct:p.pct, burden:p.burden};
+    });
+
+    var pathD = coords.map(function(c,i){ return (i===0?"M":"L") + c.x.toFixed(1) + "," + c.y.toFixed(1); }).join(" ");
+    svg.appendChild(svgEl("path", {d:pathD, fill:"none", stroke:"var(--navy)", "stroke-width":2}));
+
+    coords.forEach(function(c){
+      svg.appendChild(svgEl("circle", {cx:c.x, cy:c.y, r:4, fill:"var(--paper)", stroke:"var(--navy)", "stroke-width":2}));
+      var label = svgEl("text", {x:c.x, y:CH_PAD.top+dims.plotH+18, "text-anchor":"middle", "font-family":"var(--font-sans)", "font-size":10.5, fill:"var(--ink-soft)"});
+      label.textContent = c.pct + "%";
+      svg.appendChild(label);
+    });
+
+    var avgDoc = Math.round((s.expenseDocPercent + s.purchaseDocPercent)/2);
+    var nearestIdx = 0, nearestDist = 999;
+    coords.forEach(function(c,i){ var d = Math.abs(c.pct-avgDoc); if(d<nearestDist){nearestDist=d; nearestIdx=i;} });
+    var cur = coords[nearestIdx];
+    svg.appendChild(svgEl("circle", {cx:cur.x, cy:cur.y, r:7, fill:"none", stroke:"var(--brick)", "stroke-width":2}));
+
+    var perStep = ((points[0].burden - points[points.length-1].burden) / 5);
+    $("chartDocsCaption").textContent = "При текущих суммах расходов и покупок каждые 20 процентных пунктов недостающих документов добавляют примерно " + perStep.toFixed(1).replace(".",",") + " п.п. к налоговой нагрузке.";
+  }
+
+  /* ---------- persistence ---------- */
+  function saveState(s){
+    try{
+      window.localStorage.setItem("nn_calc_state", JSON.stringify(s));
+    }catch(e){}
+  }
+  function loadState(){
+    try{
+      var raw = window.localStorage.getItem("nn_calc_state");
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return null;
+  }
+  function applyStateToForm(s){
+    $("revenue").value = s.revenue;
+    $("revenueIncludesVat").checked = !!s.revenueIncludesVat;
+    $("vatRate").value = String(s.vatRate);
+    $("voluntaryVat").checked = !!s.voluntaryVat;
+    $("cpnCategory").value = s.cpnCategory;
+    $("expenses").value = s.expenses;
+    $("expenseDocPercent").value = s.expenseDocPercent;
+    $("expenseDocPercentValue").textContent = s.expenseDocPercent + "%";
+    $("purchases").value = s.purchases;
+    $("purchaseDocPercent").value = s.purchaseDocPercent;
+    $("purchaseDocPercentValue").textContent = s.purchaseDocPercent + "%";
+  }
+
+  /* ---------- main recalculation ---------- */
+  function recalcAll(){
+    var s = readState();
+    var r = calculate(s);
+    renderCalc(s, r);
+    renderRevenueChart(s);
+    renderDocsChart(s);
+    saveState(s);
+  }
+
+  inputs.forEach(function(id){
+    var el = $(id);
+    el.addEventListener("input", function(){
+      if(id === "expenseDocPercent") $("expenseDocPercentValue").textContent = el.value + "%";
+      if(id === "purchaseDocPercent") $("purchaseDocPercentValue").textContent = el.value + "%";
+      recalcAll();
+    });
+  });
+
+  $("resetBtn").addEventListener("click", function(){
+    applyStateToForm(DEFAULTS);
+    recalcAll();
+  });
+
+  /* ---------- init ---------- */
+  var saved = loadState();
+  applyStateToForm(saved ? Object.assign({}, DEFAULTS, saved) : DEFAULTS);
+  recalcAll();
+
+})();
+</script>
+</body>
+</html>
