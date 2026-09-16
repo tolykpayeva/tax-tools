@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Налоговые инструменты — НДС и КПН для бухгалтера РК</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF8;
+    --paper-raised:#F2F0E9;
+    --ink:#1C1B1A;
+    --ink-soft:#6B6558;
+    --rule:#DAD6CD;
+    --rule-strong:#C4BEAC;
+    --navy:#1F3A5F;
+    --navy-soft:#E7ECF1;
+    --font-serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#17181A; --paper-raised:#1F2023; --ink:#EDEAE2; --ink-soft:#A19C8E;
+      --rule:#35332E; --rule-strong:#46433C; --navy:#8FB0DA; --navy-soft:#212C3A;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#17181A; --paper-raised:#1F2023; --ink:#EDEAE2; --ink-soft:#A19C8E;
+    --rule:#35332E; --rule-strong:#46433C; --navy:#8FB0DA; --navy-soft:#212C3A;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-sans);line-height:1.5;}
+
+  .page{max-width:760px;margin:0 auto;padding:56px 16px 80px;}
+
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:48px;}
+  .brand-mark{
+    font-family:var(--font-serif);font-size:20px;font-weight:700;color:var(--navy);
+    border:1px solid var(--rule-strong);width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .brand-title{font-family:var(--font-serif);font-size:20px;font-weight:600;margin:0;}
+  .brand-sub{font-size:12.5px;color:var(--ink-soft);margin:2px 0 0;}
+
+  h1{font-family:var(--font-serif);font-size:clamp(26px,4vw,34px);font-weight:600;letter-spacing:-0.01em;margin:0 0 12px;}
+  .lede{font-family:var(--font-serif);font-size:18px;line-height:1.6;max-width:600px;margin:0 0 44px;}
+
+  .tools{border-top:1px solid var(--rule-strong);}
+  .tool{
+    display:block;text-decoration:none;color:inherit;
+    border-bottom:1px solid var(--rule);
+    padding:24px 0;
+    transition:background .15s;
+  }
+  .tool:hover{background:var(--paper-raised);}
+  .tool:focus-visible{outline:2px solid var(--navy);outline-offset:2px;}
+  .tool-name{
+    font-family:var(--font-serif);font-size:20px;font-weight:600;color:var(--navy);
+    margin:0 0 6px;
+  }
+  .tool-desc{font-size:14.5px;color:var(--ink-soft);margin:0;max-width:600px;}
+
+  .footnote{font-size:12.5px;color:var(--ink-soft);margin-top:44px;line-height:1.6;max-width:640px;}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <span class="brand-mark" aria-hidden="true">§</span>
+    <div>
+      <p class="brand-title">Налоговые инструменты</p>
+      <p class="brand-sub">НДС и КПН · РК 2026</p>
+    </div>
+  </div>
+
+  <h1>Два инструмента для бухгалтера</h1>
+  <p class="lede">Расчёт НДС и КПН по Налоговому кодексу РК, действующему с 1 января 2026 года. Оба инструмента работают прямо в браузере — ничего устанавливать не нужно.</p>
+
+  <div class="tools">
+    <a class="tool" href="tax-navigator.html">
+      <p class="tool-name">Налоговый навигатор</p>
+      <p class="tool-desc">Как цепочка документов влияет на отчёты: схемы НДС и КПН, калькулятор с долей подтверждённых документов и аналитика налоговой нагрузки.</p>
+    </a>
+    <a class="tool" href="tax-calculator.html">
+      <p class="tool-name">Налоговый калькулятор</p>
+      <p class="tool-desc">Быстрый расчёт для ежедневной работы: сумма поступления — и сразу НДС, КПН и нагрузка. Показатели компании сохраняются по БИН в этом же браузере.</p>
+    </a>
+  </div>
+
+  <p class="footnote">Расчёты упрощены для наглядности и не заменяют декларацию (формы 300.00 и 100.00) или консультацию налогового консультанта. Введённые данные не отправляются на сервер и остаются только в вашем браузере.</p>
+</div>
+</body>
+</html>
