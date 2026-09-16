@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Налоговый калькулятор — НДС и КПН по сумме и БИН</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF8;
+    --paper-raised:#F2F0E9;
+    --ink:#1C1B1A;
+    --ink-soft:#6B6558;
+    --rule:#DAD6CD;
+    --rule-strong:#C4BEAC;
+    --navy:#1F3A5F;
+    --navy-soft:#E7ECF1;
+    --brick:#A13D2C;
+    --brick-soft:#F5E7E2;
+    --forest:#3F6B4F;
+    --forest-soft:#E7EFE8;
+    --font-serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#17181A; --paper-raised:#1F2023; --ink:#EDEAE2; --ink-soft:#A19C8E;
+      --rule:#35332E; --rule-strong:#46433C; --navy:#8FB0DA; --navy-soft:#212C3A;
+      --brick:#D9836A; --brick-soft:#332320; --forest:#84BB98; --forest-soft:#1F2C22;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#17181A; --paper-raised:#1F2023; --ink:#EDEAE2; --ink-soft:#A19C8E;
+    --rule:#35332E; --rule-strong:#46433C; --navy:#8FB0DA; --navy-soft:#212C3A;
+    --brick:#D9836A; --brick-soft:#332320; --forest:#84BB98; --forest-soft:#1F2C22;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-font-smoothing:antialiased;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-sans);line-height:1.5;}
+  button,input,select{font:inherit;color:inherit;}
+
+  .page{max-width:980px;margin:0 auto;padding:48px 24px 80px;}
+
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:44px;}
+  .brand-mark{
+    font-family:var(--font-serif);font-size:20px;font-weight:700;color:var(--navy);
+    border:1px solid var(--rule-strong);width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .brand-title{font-family:var(--font-serif);font-size:20px;font-weight:600;margin:0;}
+  .brand-sub{font-size:12.5px;color:var(--ink-soft);margin:2px 0 0;}
+
+  h1{font-family:var(--font-serif);font-size:clamp(24px,3.2vw,30px);font-weight:600;letter-spacing:-0.01em;margin:0 0 10px;}
+  .lede{font-family:var(--font-serif);font-size:17px;line-height:1.6;max-width:600px;color:var(--ink);margin:0 0 32px;}
+
+  /* ---------- BIN block ---------- */
+  .bin-block{
+    border:1px solid var(--rule-strong);
+    background:var(--paper-raised);
+    padding:20px 24px;
+    margin-bottom:36px;
+  }
+  .bin-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;}
+  .bin-field{flex:1;min-width:220px;}
+  .bin-field label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  #binInput{
+    width:100%;max-width:260px;padding:10px 12px;border:1px solid var(--rule-strong);
+    background:var(--paper);color:var(--ink);font-size:15px;letter-spacing:0.02em;
+    font-variant-numeric:tabular-nums;
+  }
+  #binInput.invalid{border-color:var(--brick);}
+  .bin-error{font-size:12.5px;color:var(--brick);margin-top:6px;min-height:16px;}
+  .bin-status{font-size:12.5px;color:var(--forest);margin-top:6px;min-height:16px;}
+  .new-company{
+    background:none;border:none;padding:0;font-size:13px;color:var(--navy);
+    text-decoration:underline;cursor:pointer;white-space:nowrap;
+  }
+  .bin-hint{font-size:12.5px;color:var(--ink-soft);margin-top:12px;line-height:1.5;max-width:640px;}
+  .recent-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .recent-chip{
+    border:1px solid var(--rule-strong);background:var(--paper);
+    padding:7px 12px;font-size:12.5px;cursor:pointer;text-align:left;
+    font-variant-numeric:tabular-nums;color:var(--ink);
+  }
+  .recent-chip:hover{border-color:var(--navy);color:var(--navy);}
+  .recent-chip b{font-family:var(--font-serif);}
+
+  /* ---------- calculator ---------- */
+  .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;}
+  .form-field{margin-bottom:22px;}
+  .form-field label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  .field-hint{font-size:12px;color:var(--ink-soft);margin-top:5px;}
+  input[type=number],select{
+    width:100%;padding:10px 12px;border:1px solid var(--rule-strong);
+    background:var(--paper);color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums;
+  }
+  input[type=number]:focus,select:focus,#binInput:focus,.new-company:focus,.recent-chip:focus{
+    outline:2px solid var(--navy);outline-offset:2px;
+  }
+  input[type=checkbox]{accent-color:var(--navy);width:16px;height:16px;vertical-align:middle;margin-right:8px;}
+  .checkbox-row{display:flex;align-items:center;font-size:14px;margin-top:10px;}
+  #voluntaryVatField{display:none;}
+  #voluntaryVatField.visible{display:block;}
+
+  .result-panel{
+    border:1px solid var(--rule-strong);background:var(--paper-raised);
+    padding:28px 28px 24px;position:sticky;top:24px;
+  }
+  .badge{display:inline-block;font-size:12.5px;font-weight:600;padding:4px 10px;border:1px solid var(--rule-strong);}
+  .badge.on{color:var(--forest);border-color:var(--forest);background:var(--forest-soft);}
+  .badge.off{color:var(--ink-soft);}
+  .result-status{margin-bottom:18px;}
+  .result-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:14px;}
+  .result-row span:first-child{color:var(--ink-soft);}
+  .result-row span:last-child{font-variant-numeric:tabular-nums;font-weight:500;}
+  .result-row.total{border-bottom:none;border-top:1px solid var(--rule-strong);margin-top:6px;padding-top:16px;font-weight:600;font-size:15px;}
+  .burden-block{margin-top:24px;}
+  .burden-label{font-size:13px;color:var(--ink-soft);}
+  .burden-figure{
+    font-family:var(--font-serif);font-size:clamp(46px,6vw,64px);font-weight:700;
+    line-height:1;margin:6px 0 0;color:var(--navy);
+  }
+  .burden-figure.low{color:var(--forest);}
+  .burden-figure.high{color:var(--brick);}
+  .burden-figure.pulse{animation:pulse .4s ease;}
+  @keyframes pulse{0%{opacity:.45}100%{opacity:1}}
+  .company-tag{font-size:12.5px;color:var(--ink-soft);margin-top:16px;padding-top:14px;border-top:1px solid var(--rule);}
+  .company-tag b{color:var(--ink);font-variant-numeric:tabular-nums;}
+
+  .footnote{font-size:12.5px;color:var(--ink-soft);max-width:680px;margin-top:44px;line-height:1.6;}
+
+  @media (max-width:760px){
+    .calc-grid{grid-template-columns:1fr;gap:28px;}
+    .result-panel{position:static;}
+    .bin-row{flex-direction:column;align-items:stretch;}
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <span class="brand-mark" aria-hidden="true">§</span>
+    <div>
+      <p class="brand-title">Налоговый калькулятор</p>
+      <p class="brand-sub">НДС и КПН · РК 2026</p>
+    </div>
+  </div>
+
+  <h1>Сумма — и налог виден сразу</h1>
+  <p class="lede">Впишите сумму поступления — ниже сразу появится НДС, КПН и налоговая нагрузка. Добавьте БИН компании, и калькулятор запомнит её показатели: в следующий раз достаточно ввести тот же БИН.</p>
+
+  <div class="bin-block">
+    <div class="bin-row">
+      <div class="bin-field">
+        <label for="binInput">БИН компании (необязательно)</label>
+        <input type="text" id="binInput" inputmode="numeric" maxlength="12" placeholder="12 цифр">
+        <div class="bin-error" id="binError"></div>
+        <div class="bin-status" id="binStatus"></div>
+      </div>
+      <button type="button" class="new-company" id="newCompanyBtn">Новая компания</button>
+    </div>
+    <div class="recent-list" id="recentList"></div>
+    <p class="bin-hint">Данные сохраняются только в этом браузере, по БИН как по ярлыку. Реестр не подключается — показатели компании вы вводите один раз сами, дальше калькулятор их вспоминает.</p>
+  </div>
+
+  <div class="calc-grid">
+    <div class="calc-form">
+      <div class="form-field">
+        <label for="revenue">Сумма поступления, ₸</label>
+        <input type="number" id="revenue" min="0" step="100000" value="50000000">
+        <div class="checkbox-row">
+          <input type="checkbox" id="revenueIncludesVat">
+          <label for="revenueIncludesVat" style="margin:0;">Сумма указана с учётом НДС</label>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="vatRate">Ставка НДС по операции</label>
+        <select id="vatRate">
+          <option value="16">16% — стандартная</option>
+          <option value="5">5% — лекарства и медизделия (льготная)</option>
+        </select>
+      </div>
+
+      <div class="form-field" id="voluntaryVatField">
+        <div class="checkbox-row">
+          <input type="checkbox" id="voluntaryVat">
+          <label for="voluntaryVat" style="margin:0;">Добровольная постановка на учёт по НДС</label>
+        </div>
+        <p class="field-hint">Поле показано, потому что сумма ниже порога 43,25 млн ₸/год.</p>
+      </div>
+
+      <div class="form-field">
+        <label for="cpnCategory">Категория для КПН</label>
+        <select id="cpnCategory">
+          <option value="standard">Стандартная ставка — 20%</option>
+          <option value="bank">Банки и игорный бизнес — 25%</option>
+          <option value="agro">Сельхозпроизводители — 3%</option>
+          <option value="social">Социальная сфера — 5% (2026 год)</option>
+          <option value="sez">СЭЗ / технопарк — 0%</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label for="expenses">Расходы, принимаемые к вычету по КПН, ₸</label>
+        <input type="number" id="expenses" min="0" step="100000" value="18000000">
+        <p class="field-hint">Оставьте 0, если считаете налог с полной суммы без вычетов.</p>
+      </div>
+    </div>
+
+    <div class="result-panel">
+      <div class="result-status"><span class="badge" id="vatStatusBadge">—</span></div>
+      <div class="result-row"><span>Начислен НДС</span><span id="rOutputVat">—</span></div>
+      <div class="result-row"><span>Налогооблагаемый доход (КПН)</span><span id="rTaxableIncome">—</span></div>
+      <div class="result-row"><span>Ставка КПН</span><span id="rCpnRate">—</span></div>
+      <div class="result-row"><span>КПН к уплате</span><span id="rCpnPayable">—</span></div>
+      <div class="result-row total"><span>Итого налогов</span><span id="rTotalTax">—</span></div>
+
+      <div class="burden-block">
+        <div class="burden-label">Налоговая нагрузка от суммы</div>
+        <div class="burden-figure" id="burdenFigure">—</div>
+      </div>
+
+      <div class="company-tag" id="companyTag" style="display:none;"></div>
+    </div>
+  </div>
+
+  <p class="footnote">Ставки и порог — по Налоговому кодексу РК, действующему с 1 января 2026 года: НДС 16% (льготная 5% на лекарства и медизделия), порог постановки на учёт по НДС — 10 000 МРП ≈ 43,25 млн ₸/год, КПН 20% с дифференциацией по отраслям. Расчёт приблизительный и не заменяет декларацию.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MRP = 4325;
+  var VAT_THRESHOLD = 10000 * MRP; // 43 250 000 ₸
+
+  var CPN_RATES = {
+    standard: { rate: 0.20 },
+    bank:     { rate: 0.25 },
+    agro:     { rate: 0.03 },
+    social:   { rate: 0.05 },
+    sez:      { rate: 0.00 }
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var fieldIds = ["revenue","revenueIncludesVat","vatRate","voluntaryVat","cpnCategory","expenses"];
+
+  function readState(){
+    return {
+      revenue: parseFloat($("revenue").value) || 0,
+      revenueIncludesVat: $("revenueIncludesVat").checked,
+      vatRate: parseFloat($("vatRate").value) / 100,
+      voluntaryVat: $("voluntaryVat").checked,
+      cpnCategory: $("cpnCategory").value,
+      expenses: parseFloat($("expenses").value) || 0
+    };
+  }
+
+  function calculate(s){
+    var revenueBase = s.revenueIncludesVat ? s.revenue / (1 + s.vatRate) : s.revenue;
+    var outputVat = s.revenueIncludesVat ? (s.revenue - revenueBase) : (revenueBase * s.vatRate);
+    var isVatPayer = revenueBase > VAT_THRESHOLD || s.voluntaryVat;
+    var vatPayable = isVatPayer ? outputVat : 0;
+
+    var taxableIncome = Math.max(revenueBase - s.expenses, 0);
+    var cpnRate = CPN_RATES[s.cpnCategory].rate;
+    var cpnPayable = taxableIncome * cpnRate;
+
+    var totalTax = vatPayable + cpnPayable;
+    var burden = revenueBase > 0 ? (totalTax / revenueBase * 100) : 0;
+
+    return { revenueBase: revenueBase, outputVat: outputVat, isVatPayer: isVatPayer,
+      vatPayable: vatPayable, taxableIncome: taxableIncome, cpnRate: cpnRate,
+      cpnPayable: cpnPayable, totalTax: totalTax, burden: burden };
+  }
+
+  function fmtT(n){ return Math.round(n).toLocaleString("ru-RU") + " ₸"; }
+  function fmtPct(n){ return n.toFixed(1).replace(".", ",") + " %"; }
+
+  function renderResults(s, r){
+    $("voluntaryVatField").classList.toggle("visible", r.revenueBase <= VAT_THRESHOLD);
+
+    var badge = $("vatStatusBadge");
+    if(r.isVatPayer){ badge.textContent = "Плательщик НДС"; badge.className = "badge on"; }
+    else { badge.textContent = "Не плательщик НДС"; badge.className = "badge off"; }
+
+    $("rOutputVat").textContent = r.isVatPayer ? fmtT(r.outputVat) : "0 ₸";
+    $("rTaxableIncome").textContent = fmtT(r.taxableIncome);
+    $("rCpnRate").textContent = (r.cpnRate * 100).toFixed(0) + "%";
+    $("rCpnPayable").textContent = fmtT(r.cpnPayable);
+    $("rTotalTax").textContent = fmtT(r.totalTax);
+
+    var fig = $("burdenFigure");
+    var prevText = fig.textContent;
+    fig.textContent = fmtPct(r.burden);
+    fig.classList.remove("low","high");
+    if(r.burden < 15) fig.classList.add("low");
+    else if(r.burden >= 30) fig.classList.add("high");
+    if(prevText !== fig.textContent){
+      fig.classList.remove("pulse");
+      void fig.offsetWidth;
+      fig.classList.add("pulse");
+    }
+  }
+
+  /* ---------- BIN profile storage ---------- */
+  function getProfiles(){
+    try{ return JSON.parse(window.localStorage.getItem("nk_profiles") || "{}"); }
+    catch(e){ return {}; }
+  }
+  function saveProfiles(p){
+    try{ window.localStorage.setItem("nk_profiles", JSON.stringify(p)); }catch(e){}
+  }
+  function getRecent(){
+    try{ return JSON.parse(window.localStorage.getItem("nk_recent") || "[]"); }
+    catch(e){ return []; }
+  }
+  function saveRecent(list){
+    try{ window.localStorage.setItem("nk_recent", JSON.stringify(list)); }catch(e){}
+  }
+  function pushRecent(bin){
+    var list = getRecent().filter(function(b){ return b !== bin; });
+    list.unshift(bin);
+    if(list.length > 6) list = list.slice(0,6);
+    saveRecent(list);
+  }
+
+  function sanitizeBin(raw){ return raw.replace(/\D/g,"").slice(0,12); }
+  function currentBin(){
+    var v = sanitizeBin($("binInput").value);
+    return v.length === 12 ? v : null;
+  }
+
+  function applyStateToForm(s){
+    $("revenue").value = s.revenue;
+    $("revenueIncludesVat").checked = !!s.revenueIncludesVat;
+    $("vatRate").value = String(s.vatRate);
+    $("voluntaryVat").checked = !!s.voluntaryVat;
+    $("cpnCategory").value = s.cpnCategory;
+    $("expenses").value = s.expenses;
+  }
+
+  function renderRecent(){
+    var list = getRecent();
+    var profiles = getProfiles();
+    var wrap = $("recentList");
+    wrap.innerHTML = "";
+    list.forEach(function(bin){
+      var p = profiles[bin];
+      if(!p) return;
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "recent-chip";
+      chip.innerHTML = "<b>" + bin + "</b> · " + Math.round(p.revenue/1000000) + " млн ₸ · нагрузка " + fmtPct(p.burden);
+      chip.addEventListener("click", function(){
+        $("binInput").value = bin;
+        loadBin(bin, true);
+      });
+      wrap.appendChild(chip);
+    });
+  }
+
+  function loadBin(bin, forceLoad){
+    var profiles = getProfiles();
+    var status = $("binStatus");
+    if(profiles[bin]){
+      if(forceLoad || !window.__nkTouchedSinceBin){
+        applyStateToForm(profiles[bin]);
+      }
+      status.textContent = "Показаны сохранённые данные компании.";
+    } else {
+      status.textContent = "Новая компания — заполните показатели, они сохранятся автоматически.";
+    }
+    recalcAll();
+  }
+
+  function recalcAll(){
+    var s = readState();
+    var r = calculate(s);
+    renderResults(s, r);
+
+    var bin = currentBin();
+    var tag = $("companyTag");
+    if(bin){
+      var profiles = getProfiles();
+      profiles[bin] = Object.assign({}, s, { burden: r.burden, updatedAt: Date.now() });
+      saveProfiles(profiles);
+      pushRecent(bin);
+      tag.style.display = "block";
+      tag.innerHTML = "Компания <b>" + bin + "</b> сохранена в этом браузере.";
+    } else {
+      tag.style.display = "none";
+    }
+    renderRecent();
+  }
+
+  /* ---------- events ---------- */
+  $("binInput").addEventListener("input", function(){
+    var raw = $("binInput").value;
+    var clean = sanitizeBin(raw);
+    $("binInput").value = clean;
+    var err = $("binError");
+    var status = $("binStatus");
+    window.__nkTouchedSinceBin = false;
+    if(clean.length === 0){
+      err.textContent = ""; status.textContent = "";
+      $("binInput").classList.remove("invalid");
+      recalcAll();
+      return;
+    }
+    if(clean.length < 12){
+      err.textContent = "БИН должен содержать 12 цифр.";
+      status.textContent = "";
+      $("binInput").classList.add("invalid");
+      recalcAll();
+      return;
+    }
+    err.textContent = "";
+    $("binInput").classList.remove("invalid");
+    loadBin(clean, true);
+  });
+
+  fieldIds.forEach(function(id){
+    $(id).addEventListener("input", function(){
+      window.__nkTouchedSinceBin = true;
+      recalcAll();
+    });
+  });
+
+  $("newCompanyBtn").addEventListener("click", function(){
+    $("binInput").value = "";
+    $("binError").textContent = "";
+    $("binStatus").textContent = "";
+    $("binInput").classList.remove("invalid");
+    applyStateToForm({ revenue:50000000, revenueIncludesVat:false, vatRate:16, voluntaryVat:false, cpnCategory:"standard", expenses:18000000 });
+    recalcAll();
+  });
+
+  /* ---------- init ---------- */
+  applyStateToForm({ revenue:50000000, revenueIncludesVat:false, vatRate:16, voluntaryVat:false, cpnCategory:"standard", expenses:18000000 });
+  recalcAll();
+
+})();
+</script>
+</body>
+</html>
